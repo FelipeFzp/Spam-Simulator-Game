@@ -13,10 +13,13 @@ export class GameComponent implements OnInit {
   private _game: HTMLCanvasElement;
   private _gameContext: CanvasRenderingContext2D;
   private _gameElements = new GameElements(1280, 960);
+
   private _mouseX: number;
   private _mouseY: number;
 
   private _currentAdIndex: number = 1;
+  private _currentCursorIndex: number = 1;
+  private _showGameCursor: boolean = false;
 
   constructor() {
   }
@@ -27,6 +30,7 @@ export class GameComponent implements OnInit {
 
   public startGame(): void {
     this._configureCanvas()
+
     this._configureAutoskipAd()
     this._configureClickPoints()
     this._configureMouseHovers()
@@ -39,11 +43,17 @@ export class GameComponent implements OnInit {
     this._gameContext = this._game.getContext('2d');
     this._game.width = this._gameElements.screenWidth;
     this._game.height = this._gameElements.screenHeight;
+    this.gameElementRef.nativeElement.addEventListener('mousemove', (ev: MouseEvent) => {
+      const gameRect = this._game.getBoundingClientRect();
+      this._mouseX = ev.clientX - gameRect.left;
+      this._mouseY = ev.clientY - gameRect.top;
+    })
   }
 
   private _configureAutoskipAd(): void {
     setInterval(() => this._incrementAdIndex(), 2000)
   }
+
 
   private _incrementAdIndex(): void {
     const adsLength = Object.keys(this._gameElements.ads).length;
@@ -56,13 +66,9 @@ export class GameComponent implements OnInit {
 
   private _configureClickPoints(): void {
     this.gameElementRef.nativeElement.addEventListener('click', (ev: MouseEvent) => {
-      const gameRect = this._game.getBoundingClientRect();
-      const mouseX = ev.clientX - gameRect.left;
-      const mouseY = ev.clientY - gameRect.top;
-
       this._gameElements
         .ads[this._currentAdIndex]
-        .onClick(mouseX, mouseY, () => this._incrementAdIndex())
+        .onClick(this._mouseX, this._mouseY, () => this._incrementAdIndex())
     })
   }
 
@@ -76,7 +82,7 @@ export class GameComponent implements OnInit {
         .ads[this._currentAdIndex]
         .onMouseMove(
           mouseX, mouseY,
-          () => this._changeCursorStyle('pointer'),
+          () => this._changeCursorStyle('game'),
           () => this._changeCursorStyle('default'))
     })
   }
@@ -97,19 +103,37 @@ export class GameComponent implements OnInit {
     this._drawImageElement(currentAd);
   }
 
+  private _drawUserCursor(): void {
+    const currentCursor = this._gameElements.cursors[this._currentCursorIndex];
+    currentCursor.visible = this._showGameCursor;
+    currentCursor.top = this._mouseY - (currentCursor.height / 2);
+    currentCursor.left = this._mouseX - (currentCursor.width / 2);
+    this._drawImageElement(currentCursor);
+    //TODO: desenhar cursor que segue o cursor do browser
+  }
+
   //COMMON
   private _drawFrame(): void {
     this._drawBackground()
     this._drawComputer()
     this._drawAd()
-    // drawCursor(cursor1)
+    this._drawUserCursor()
   }
 
-  private _changeCursorStyle(style: 'default' | 'pointer'): void {
-    this.gameElementRef.nativeElement.style.cursor = style
+  private _changeCursorStyle(style: 'default' | 'pointer' | 'game'): void {
+    if (style != 'game') {
+      this._showGameCursor = false;
+      this.gameElementRef.nativeElement.style.cursor = style
+    } else {
+      this.gameElementRef.nativeElement.style.cursor = 'none'
+      this._showGameCursor = true;
+    }
   }
 
   private _drawImageElement(image: GameImageElement): void {
+    if (!image.visible) {
+      return;
+    }
     this._gameContext.save(); // Save the current state
     this._gameContext.drawImage(
       GameImageElement.toHtmlImageElement(image),
