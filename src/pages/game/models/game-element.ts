@@ -8,10 +8,17 @@ export class GameElement {
     public visible: boolean = true;
     public clickPoints?: GameElementClickPoint[];
 
-    public onElementClick(mouseX: number, mouseY: number, onValidClick: () => void): void {
+    public onClick(mouseX: number, mouseY: number, onValidClick: () => void): void {
         if (this.clickPoints.find(cp => mouseX > cp.x1 && mouseX < cp.x2 && mouseY > cp.y1 && mouseY < cp.y2)) {
             onValidClick()
         };
+    }
 
+    public onMouseMove(mouseX: number, mouseY: number, onMouseIn: () => void, onMouseOut?: () => void): void {
+        if (this.clickPoints.find(cp => mouseX > cp.x1 && mouseX < cp.x2 && mouseY > cp.y1 && mouseY < cp.y2)) {
+            onMouseIn()
+        } else {
+            onMouseOut ? onMouseOut() : undefined
+        };
     }
 }

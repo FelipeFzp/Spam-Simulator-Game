@@ -29,6 +29,7 @@ export class GameComponent implements OnInit {
     this._configureCanvas()
     this._configureAutoskipAd()
     this._configureClickPoints()
+    this._configureMouseHovers()
 
     setInterval(() => this._drawFrame())
   }
@@ -61,18 +62,33 @@ export class GameComponent implements OnInit {
 
       this._gameElements
         .ads[this._currentAdIndex]
-        .onElementClick(mouseX, mouseY, () => this._incrementAdIndex())
+        .onClick(mouseX, mouseY, () => this._incrementAdIndex())
+    })
+  }
+
+  private _configureMouseHovers(): void {
+    this.gameElementRef.nativeElement.addEventListener('mousemove', (ev: MouseEvent) => {
+      const gameRect = this._game.getBoundingClientRect();
+      const mouseX = ev.clientX - gameRect.left;
+      const mouseY = ev.clientY - gameRect.top;
+
+      this._gameElements
+        .ads[this._currentAdIndex]
+        .onMouseMove(
+          mouseX, mouseY,
+          () => this._changeCursorStyle('pointer'),
+          () => this._changeCursorStyle('default'))
     })
   }
 
   //DRAW ELEMENTS
   private _drawBackground(): void {
-    const currentBackground = this._gameElements.backgrounds['1'];
+    const currentBackground = this._gameElements.backgrounds[1];
     this._drawImageElement(currentBackground);
   }
 
   private _drawComputer(): void {
-    const currentComputer = this._gameElements.computers['1'];
+    const currentComputer = this._gameElements.computers[1];
     this._drawImageElement(currentComputer);
   }
 
@@ -87,6 +103,10 @@ export class GameComponent implements OnInit {
     this._drawComputer()
     this._drawAd()
     // drawCursor(cursor1)
+  }
+
+  private _changeCursorStyle(style: 'default' | 'pointer'): void {
+    this.gameElementRef.nativeElement.style.cursor = style
   }
 
   private _drawImageElement(image: GameImageElement): void {
