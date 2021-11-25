@@ -35,7 +35,7 @@ export class GameComponent implements OnInit {
     this._configureClickPoints()
     this._configureMouseHovers()
 
-    setInterval(() => this._drawFrame())
+    this._drawNextFrame()
   }
 
   private _configureCanvas(): void {
@@ -113,11 +113,12 @@ export class GameComponent implements OnInit {
   }
 
   //COMMON
-  private _drawFrame(): void {
+  private _drawNextFrame(): void {
     this._drawBackground()
     this._drawComputer()
     this._drawAd()
     this._drawUserCursor()
+    requestAnimationFrame(() => this._drawNextFrame())
   }
 
   private _changeCursorStyle(style: 'default' | 'pointer' | 'game'): void {
